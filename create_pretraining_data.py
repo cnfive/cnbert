@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Create masked LM/next sentence masked_lm TF examples for BERT."""
-#为bert模型训练创建带遮蔽的，下一句模型训练的tfrecord 格式文件
+#为bert模型训练创建带遮蔽的，下一句模型训练的tfrecord 格式文件 
 
 from __future__ import absolute_import
 from __future__ import division
