@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The main BERT model and related functions."""
-
+#模型文件
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -66,13 +66,13 @@ class BertConfig(object):
       initializer_range: The stdev of the truncated_normal_initializer for
         initializing all weight matrices.
     """
-    self.vocab_size = vocab_size
-    self.hidden_size = hidden_size
-    self.num_hidden_layers = num_hidden_layers
-    self.num_attention_heads = num_attention_heads
-    self.hidden_act = hidden_act
-    self.intermediate_size = intermediate_size
-    self.hidden_dropout_prob = hidden_dropout_prob
+    self.vocab_size = vocab_size                      #词典大小
+    self.hidden_size = hidden_size                    #隐藏单元数目
+    self.num_hidden_layers = num_hidden_layers           #隐藏层大小
+    self.num_attention_heads = num_attention_heads       #注意力头数
+    self.hidden_act = hidden_act                          #定义激励函数
+    self.intermediate_size = intermediate_size             #中间层大小
+    self.hidden_dropout_prob = hidden_dropout_prob          #隐藏层抛弃的部分概率
     self.attention_probs_dropout_prob = attention_probs_dropout_prob
     self.max_position_embeddings = max_position_embeddings
     self.type_vocab_size = type_vocab_size
@@ -282,7 +282,7 @@ def gelu(input_tensor):
   cdf = 0.5 * (1.0 + tf.erf(input_tensor / tf.sqrt(2.0)))
   return input_tensor * cdf
 
-
+#激励函数选择
 def get_activation(activation_string):
   """Maps a string to a Python function, e.g., "relu" => `tf.nn.relu`.
 
@@ -364,7 +364,7 @@ def dropout(input_tensor, dropout_prob):
   output = tf.nn.dropout(input_tensor, 1.0 - dropout_prob)
   return output
 
-
+#层归一化
 def layer_norm(input_tensor, name=None):
   """Run layer normalization on the last dimension of the tensor."""
   return tf.contrib.layers.layer_norm(
@@ -382,7 +382,7 @@ def create_initializer(initializer_range=0.02):
   """Creates a `truncated_normal_initializer` with the given range."""
   return tf.truncated_normal_initializer(stddev=initializer_range)
 
-
+#词转换成词向量
 def embedding_lookup(input_ids,
                      vocab_size,
                      embedding_size=128,
@@ -431,6 +431,7 @@ def embedding_lookup(input_ids,
                       input_shape[0:-1] + [input_shape[-1] * embedding_size])
   return (output, embedding_table)
 
+#通过计算得到词向量和词位置向量的和
 
 def embedding_postprocessor(input_tensor,
                             use_token_type=False,
@@ -478,7 +479,7 @@ def embedding_postprocessor(input_tensor,
     raise ValueError("The seq length (%d) cannot be greater than "
                      "`max_position_embeddings` (%d)" %
                      (seq_length, max_position_embeddings))
-
+  #output=输入向量
   output = input_tensor
 
   if use_token_type:
@@ -496,8 +497,10 @@ def embedding_postprocessor(input_tensor,
     token_type_embeddings = tf.matmul(one_hot_ids, token_type_table)
     token_type_embeddings = tf.reshape(token_type_embeddings,
                                        [batch_size, seq_length, width])
+  #output+=词分类向量
     output += token_type_embeddings
 
+  #计算词位置向量
   if use_position_embeddings:
     full_position_embeddings = tf.get_variable(
         name=position_embedding_name,
@@ -529,6 +532,8 @@ def embedding_postprocessor(input_tensor,
     position_broadcast_shape.extend([seq_length, width])
     position_embeddings = tf.reshape(position_embeddings,
                                      position_broadcast_shape)
+
+    #output+=词位置向量
     output += position_embeddings
 
   output = layer_norm_and_dropout(output, dropout_prob)
@@ -570,7 +575,14 @@ def create_attention_mask_from_input_mask(from_tensor, to_mask):
 
 #定义注意力层，，实际上计算多头注意力这一部分
 #参考：http://jalammar.github.io/illustrated-transformer/
-#http://nlp.seas.harvard.edu/2018/04/03/attention.html
+#参考 http://nlp.seas.harvard.edu/2018/04/03/attention.html
+#attenion 里面提到的 query ,key ,value 主要是用在一个序列到另一个序列的转换训练里面。
+#多头注意计算实际上就是把输入序列按头数切成多份，然后每份按注意力公式计算，最后累加每份的结果
+#self-attention 自身注意力的计算公式 等于 softmax（ 乘k 的转置 除以 维度d的开方）乘以v
+#其中q,k,v 的计算来路是，是输入 x,设置权重，w_q,w_k,w_v,
+
+# q=q*w_q   k=x*w_k  v=q_v
+#多头注意力 切分以后每头的q,k,v 计算就有一个单独的权重w_i i是头数的序号
 
 def attention_layer(from_tensor,
                     to_tensor,
@@ -896,6 +908,7 @@ def transformer_model(input_tensor,
             kernel_initializer=create_initializer(initializer_range))
 
       # Down-project back to `hidden_size` then add the residual.
+      #输出层，又做了一次全连接转换
       with tf.variable_scope("output"):
         layer_output = tf.layers.dense(
             intermediate_output,

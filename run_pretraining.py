@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Run masked LM/next sentence masked_lm pre-training for BERT."""
+#bert模型的预训练参数功能，和图像识别里面的用训练好的模型最后一层，再设计模型的思想是差不多的
+#在transformer encoder 模型上后面加了一点 y=ax+b 的回归训练，实际上其它任务代码演示的最后一部分模型也都是加的回归训练这一步
+#预训练完成2个任务，预测词和预测句子，这两步大概是为squad这样的问题定制的
 
 from __future__ import absolute_import
 from __future__ import division
