@@ -157,9 +157,9 @@ class SquadExample(object):
                orig_answer_text=None,
                start_position=None,
                end_position=None):
-    self.qas_id = qas_id
+    self.qas_id = qas_id                     #id
     self.question_text = question_text       #基于文本的提问
-    self.doc_tokens = doc_tokens
+    self.doc_tokens = doc_tokens             #文档分词
     self.orig_answer_text = orig_answer_text  #原始答案
     self.start_position = start_position      #答案在句子中的开始位置
     self.end_position = end_position          #答案在句子中的结束位置
@@ -514,9 +514,9 @@ def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
   model = modeling.BertModel(
       config=bert_config,
       is_training=is_training,
-      input_ids=input_ids,
-      input_mask=input_mask,
-      token_type_ids=segment_ids,
+      input_ids=input_ids,               #输入格式转换后的队列 “”
+      input_mask=input_mask,             #屏蔽
+      token_type_ids=segment_ids,        #输入的句子分段ID
       use_one_hot_embeddings=use_one_hot_embeddings)
   #从bert模型读取序列输出
   final_hidden = model.get_sequence_output()
@@ -607,21 +607,25 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
       seq_length = modeling.get_shape_list(input_ids)[1]
 
       def compute_loss(logits, positions):
+        #把位置数转换成独热标签
         one_hot_positions = tf.one_hot(
             positions, depth=seq_length, dtype=tf.float32)
+        #对softmax结果取ln对数
         log_probs = tf.nn.log_softmax(logits, axis=-1)
+        #先累加（独热标签乘以每个位的概率），然后取均值
         loss = -tf.reduce_mean(
             tf.reduce_sum(one_hot_positions * log_probs, axis=-1))
         return loss
 
       start_positions = features["start_positions"]
       end_positions = features["end_positions"]
-
+      #计算答案开始位置的损失
       start_loss = compute_loss(start_logits, start_positions)
+      #计算答案结束位置的损失
       end_loss = compute_loss(end_logits, end_positions)
-
+      #总的损失
       total_loss = (start_loss + end_loss) / 2.0
-
+      #调用模型优化函数
       train_op = optimization.create_optimizer(
           total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu)
 
