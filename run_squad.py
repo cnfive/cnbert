@@ -606,15 +606,15 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
     if mode == tf.estimator.ModeKeys.TRAIN:
       seq_length = modeling.get_shape_list(input_ids)[1]
 
-      def compute_loss(logits, positions):
+      def compute_loss(logits, positions):  #交叉熵损失函数
         #把位置数转换成独热标签
         one_hot_positions = tf.one_hot(
             positions, depth=seq_length, dtype=tf.float32)
-        #对softmax结果取ln对数
+        #对softmax结果取ln对数，计算熵的参数，logits部分的信息量
         log_probs = tf.nn.log_softmax(logits, axis=-1)
         #先累加（独热标签乘以每个位的概率），然后取均值
         loss = -tf.reduce_mean(
-            tf.reduce_sum(one_hot_positions * log_probs, axis=-1))
+            tf.reduce_sum(one_hot_positions * log_probs, axis=-1))   #熵的计算公式正确值与（预测值概率对数）相乘的累加
         return loss
 
       start_positions = features["start_positions"]
