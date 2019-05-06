@@ -13,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The main BERT model and related functions."""
+#QA模型主要是计算词在段落里面的位置，根据位置来推出答案。
+#预训练模型无限接近这个需求。通过词向量加位置向量。向量的含义更加丰富
+#通过训练句子的前后关系，训练预测句子中被遮盖的词。（who,why,how,...）
+#这时候的向量已经很接近答案了。再来一步微调。计算结束
 #模型文件
 from __future__ import absolute_import
 from __future__ import division

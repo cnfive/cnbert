@@ -92,7 +92,7 @@ flags.DEFINE_integer("predict_batch_size", 8,
 flags.DEFINE_float("learning_rate", 5e-5, "The initial learning rate for Adam.")
 
 flags.DEFINE_float("num_train_epochs", 3.0,
-                   "Total number of training epochs to perform.")
+                   "Total number of training epochs to perform.")      #微调的批次数很小：3
 
 flags.DEFINE_float(
     "warmup_proportion", 0.1,
